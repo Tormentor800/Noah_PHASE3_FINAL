@@ -1,0 +1,4 @@
+bet_id,league,market,team_or_side,entry_odds,close_odds,clv_pct,result,stake,pnl
+b1,EPL,ML,Arsenal,2.1,2.05,-2.381,win,100,110.0
+b2,EPL,ML,Chelsea,1.8,1.85,2.778,loss,80,-80
+b3,EPL,Total,Over 2.5,2.0,1.95,-2.5,push,50,0.0

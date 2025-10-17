@@ -1,89 +1,83 @@
 ﻿from __future__ import annotations
-import os, json
-from typing import Dict
-import numpy as np
-import pandas as pd
+from dataclasses import dataclass
+from typing import List, Dict, Any, Iterable, Tuple
+import csv
+import math
+import os
 
-ART = "artifacts"
-os.makedirs(ART, exist_ok=True)
+@dataclass(frozen=True)
+class Bet:
+    bet_id: str
+    league: str
+    market: str
+    team_or_side: str
+    stake: float            # risked amount (units or currency)
+    entry_odds: float       # decimal odds
+    close_odds: float       # decimal odds at close (sharp)
+    result: str             # "win" | "loss" | "push"
 
-# Inputs
-PER_BET = os.path.join(ART, "per_bet_execution_sharp.csv")
-CLOSES  = os.path.join(ART, "sharp_closes.csv")
+def grade_bet(result: str) -> str:
+    r = (result or "").strip().lower()
+    if r in {"win","loss","push"}:
+        return r
+    raise ValueError(f"Unknown result: {result}")
 
-# Outputs
-OUT_CSV = os.path.join(ART, "settlement_report.csv")
-SUMMARY = os.path.join(ART, "settlement_summary.csv")
-LEDGER  = os.path.join(ART, "ledger_balances.json")
+def compute_clv(entry_odds: float, close_odds: float) -> float:
+    """CLV % = (close_price - entry_price) / entry_price * 100 (on decimal odds)."""
+    if entry_odds <= 1e-12 or math.isnan(entry_odds):
+        return 0.0
+    return (close_odds - entry_odds) / entry_odds * 100.0
 
-def _safe_read_csv(path: str) -> pd.DataFrame:
-    if not os.path.exists(path):
-        return pd.DataFrame()
-    try:
-        return pd.read_csv(path)
-    except UnicodeDecodeError:
-        return pd.read_csv(path, encoding="utf-8", errors="ignore")
+def _payout_decimal(stake: float, odds: float) -> float:
+    """Return profit (not return) for decimal odds on win; loss returns -stake; push -> 0."""
+    return stake * (odds - 1.0)
 
-def _ensure_selection(df: pd.DataFrame) -> pd.DataFrame:
-    if "selection" not in df.columns:
-        df = df.copy()
-        df["selection"] = "HOME"
-    return df
+def settle_one(b: Bet) -> Tuple[float, Dict[str, Any]]:
+    """Return (pnl, row_dict) for CSV/summary."""
+    res = grade_bet(b.result)
+    if res == "win":
+        pnl = _payout_decimal(b.stake, b.entry_odds)
+    elif res == "loss":
+        pnl = -b.stake
+    else:  # push
+        pnl = 0.0
+    clv_pct = compute_clv(b.entry_odds, b.close_odds)
+    row = {
+        "bet_id": b.bet_id,
+        "league": b.league,
+        "market": b.market,
+        "team_or_side": b.team_or_side,
+        "entry_odds": round(b.entry_odds, 4),
+        "close_odds": round(b.close_odds, 4),
+        "clv_pct": round(clv_pct, 3),
+        "result": res,
+        "stake": round(b.stake, 2),
+        "pnl": round(pnl, 2),
+    }
+    return pnl, row
 
-def settle_batch() -> Dict[str, object]:
-    per_bet = _safe_read_csv(PER_BET)
-    if per_bet.empty:
-        return {"ok": False, "reason": "no per_bet_execution_sharp.csv"}
+def reconcile_ledger(bets: Iterable[Bet]) -> Tuple[float, List[Dict[str, Any]]]:
+    """Compute total pnl and rows suitable for export."""
+    total = 0.0
+    rows: List[Dict[str, Any]] = []
+    for b in bets:
+        pnl, row = settle_one(b)
+        total += pnl
+        rows.append(row)
+    return round(total, 2), rows
 
-    closes = _safe_read_csv(CLOSES)  # may be empty
+def export_edge_vs_close_csv(rows: List[Dict[str, Any]], path: str) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fieldnames = ["bet_id","league","market","team_or_side","entry_odds","close_odds","clv_pct","result","stake","pnl"]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
 
-    per_bet = _ensure_selection(per_bet)
-    if not closes.empty:
-        closes = _ensure_selection(closes)
-
-    merge_keys = [c for c in ["entry_ts","league","market","selection"] if c in per_bet.columns and (closes.empty or c in closes.columns)]
-    if not closes.empty and merge_keys:
-        df = per_bet.merge(closes, on=merge_keys, how="left", suffixes=("", "_close"))
-    else:
-        df = per_bet.copy()
-
-    if "sharp_close_prob" in df.columns and "exec_prob" in df.columns:
-        df["clv_pp"] = (df["sharp_close_prob"] - df["exec_prob"]) * 100.0
-    else:
-        df["clv_pp"] = np.nan
-
-    if "result" in df.columns and "stake" in df.columns:
-        df["pnl"] = np.where(df["result"].astype(float) > 0.5, df["stake"].astype(float), -df["stake"].astype(float))
-    else:
-        df["pnl"] = np.nan
-
-        # Normalize expected columns for tests/consumers
-    if "sharp_close_prob" not in df.columns and "sharp_close_prob_close" in df.columns:
-        df["sharp_close_prob"] = df["sharp_close_prob_close"]
-    if "stake" not in df.columns:
-        # default unknown stake to 0.0 to satisfy schema
-        df["stake"] = 0.0
-
-    df.to_csv(OUT_CSV, index=False)
-
-    rows = []
-    tot = len(df)
-    pct_clv_pos = float((df["clv_pp"] > 0).mean()) if tot else 0.0
-    rows.append({"scope":"overall","n":tot,"pct_clv_gt_0":pct_clv_pos,"avg_clv_pp":float(df["clv_pp"].mean())})
-
-    if "league" in df.columns:
-        g = df.groupby("league", dropna=False)["clv_pp"]
-        for k, s in g:
-            rows.append({"scope":f"league={k}","n":int(s.shape[0]),"pct_clv_gt_0":float((s>0).mean()),"avg_clv_pp":float(s.mean())})
-    if "market" in df.columns:
-        g = df.groupby("market", dropna=False)["clv_pp"]
-        for k, s in g:
-            rows.append({"scope":f"market={k}","n":int(s.shape[0]),"pct_clv_gt_0":float((s>0).mean()),"avg_clv_pp":float(s.mean())})
-
-    pd.DataFrame(rows).to_csv(SUMMARY, index=False)
-
-    ledger = {"balances": {"house": float(df["pnl"].fillna(0).sum())}}
-    with open(LEDGER, "w", encoding="utf-8") as f:
-        json.dump(ledger, f, indent=2)
-
-    return {"ok": True, "wrote": {"report": OUT_CSV, "summary": SUMMARY, "ledger": LEDGER}}
+def post_balance_update(total_pnl: float) -> None:
+    """
+    Stub hook for your internal API: POST /settlement/update_balance { delta: total_pnl }.
+    Wire up `requests` here if/when desired. Kept as a no-op to remain unit-testable offline.
+    """
+    return

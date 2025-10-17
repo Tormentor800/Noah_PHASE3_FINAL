@@ -1,0 +1,19 @@
+kill_switch: true
+exposure:
+  daily_cap_usd: 10000
+  per_league_cap_usd:
+    NBA: 2500
+    NFL: 3000
+duplicate_guard:
+  window_sec: 120
+correlation_guard:
+  max_same_team_open: 3
+slippage:
+  max_bps: 50
+exposure_caps:
+  total_usd: 10000
+  per_league:
+    NBA: 2000
+    EPL: 2000
+    NHL: 2000
+duplicate_guard_sec: 10

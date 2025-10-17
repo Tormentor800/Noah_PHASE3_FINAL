@@ -1,0 +1,2 @@
+league,market,n,gate_min,pct_passing_gate,pct_clv_gt_0,avg_clv_pp,avg_slippage_bps,avg_latency_ms
+NBA,ML,400,0.01,1.0,1.0,0.06523286814965172,-8.041573650701512,113.46

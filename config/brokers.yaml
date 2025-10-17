@@ -1,0 +1,31 @@
+books:
+  pinnacle:
+    enabled: true
+    fee_bps: 8
+  sbo:
+    enabled: true
+    fee_bps: 6
+  isn:
+    enabled: true
+    fee_bps: 6
+pinnacle:
+  pause: false
+  fee_bps: 8
+  slippage_bps_default: 40
+  api:
+    base_url: https://api.asianconnect.mock
+    key: REPLACE
+sbo:
+  pause: false
+  fee_bps: 6
+  slippage_bps_default: 40
+  api:
+    base_url: https://api.asianconnect.mock
+    key: REPLACE
+isn:
+  pause: false
+  fee_bps: 6
+  slippage_bps_default: 40
+  api:
+    base_url: https://api.asianconnect.mock
+    key: REPLACE

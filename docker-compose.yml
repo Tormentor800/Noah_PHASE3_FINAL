@@ -1,0 +1,34 @@
+﻿version: "3.9"
+services:
+  api:
+    build: .
+    container_name: m7_api
+    ports:
+      - "9010:9010"
+    environment:
+      - MODEL_PATH=/app/artifacts/model.joblib
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./config:/app/config
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9010/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  admin:
+    build: .
+    container_name: m7_admin
+    depends_on:
+      api:
+        condition: service_healthy
+    command: >
+      streamlit run dashboards/m7_drift_perf_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./config:/app/config

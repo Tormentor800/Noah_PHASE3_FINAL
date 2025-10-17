@@ -1,0 +1,5 @@
+﻿# --- risk controls (added via PS) ---
+risk:
+  kill_switch: false        # true = block all new bets
+  max_corr: 0.70            # block if simulated corr with any open side exceeds this
+  corr_min_series: 5        # minimum timepoints needed to evaluate correlation

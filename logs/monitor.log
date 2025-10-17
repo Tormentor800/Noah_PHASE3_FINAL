@@ -1,0 +1,60 @@
+﻿ERR  [2025-10-17T13:32:22] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T13:32:34] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T13:33:38] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T13:36:11] cannot reach /metrics: Unable to connect to the remote server
+INFO [2025-10-17T13:38:26] ok=True per_bet=832 settlement=832 summary=7
+INFO [2025-10-17T13:40:01] ok=True per_bet=832 settlement=832 summary=7
+INFO [2025-10-17T13:45:00] ok=True per_bet=832 settlement=832 summary=7
+ERR  [2025-10-17T13:50:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T13:55:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:00:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:05:03] cannot reach /metrics: Unable to connect to the remote server
+INFO [2025-10-17T14:10:00] ok=True per_bet=832 settlement=832 summary=7
+INFO [2025-10-17T14:15:00] ok=True per_bet=832 settlement=832 summary=7
+ERR  [2025-10-17T14:20:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:25:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:30:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:35:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:40:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:45:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T14:55:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:00:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:05:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:10:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:15:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:20:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:25:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:30:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:35:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:40:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:45:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:50:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T15:55:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:00:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:05:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:10:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:15:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:20:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:25:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:30:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:35:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:40:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:45:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:50:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T16:55:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T17:00:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T17:05:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T17:10:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T17:15:02] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:15:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:20:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:25:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:30:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:35:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:40:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:45:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:50:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T19:55:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T20:00:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T20:05:03] cannot reach /metrics: Unable to connect to the remote server
+ERR  [2025-10-17T20:10:03] cannot reach /metrics: Unable to connect to the remote server

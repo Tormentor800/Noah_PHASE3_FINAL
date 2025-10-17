@@ -1,0 +1,3 @@
+{"book": "pinnacle", "league": "NBA", "market": "ML", "selection": "HOME", "client_order_id": "demo-ord-001", "entry_prob": 0.54, "exec_prob": 0.5403511751320543, "stake": 50, "note": "filled", "fee_bps": 8, "ts": 1760696108.7257805}
+{"book": "sbo", "league": "NBA", "market": "ML", "selection": "HOME", "client_order_id": "demo-ord-001", "entry_prob": 0.54, "exec_prob": 0.5402867458374133, "stake": 50, "note": "filled", "fee_bps": 6, "ts": 1760696108.734902}
+{"book": "isn", "league": "NBA", "market": "ML", "selection": "HOME", "client_order_id": "demo-ord-001", "entry_prob": 0.54, "exec_prob": 0.5373678632139404, "stake": 50, "note": "filled", "fee_bps": 6, "ts": 1760696108.7438867}

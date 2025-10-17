@@ -1,0 +1,8 @@
+drift:
+  psi_soft: 0.15
+  psi_hard: 0.25
+  ks_p_soft: 0.01
+  ks_p_hard: 0.001
+kpi:
+  clv_bps_min: -75.0
+  ev_pct_min: -1.5

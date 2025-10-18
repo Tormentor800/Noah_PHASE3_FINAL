@@ -1,34 +1,51 @@
-﻿version: "3.9"
-services:
+﻿services:
   api:
     build: .
-    container_name: m7_api
+    container_name: noah_api
+    environment:
+      UVICORN_APP: "app.main:app"
+      BIND_HOST: "0.0.0.0"
+      BIND_PORT: "9010"
     ports:
       - "9010:9010"
-    environment:
-      - MODEL_PATH=/app/artifacts/model.joblib
     volumes:
-      - ./artifacts:/app/artifacts
-      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./config.yml:/app/config.yml:rw
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9010/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:9010/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
 
   admin:
     build: .
-    container_name: m7_admin
+    container_name: noah_admin
+    command: ["python","-m","streamlit","run","ui/app.py","--server.address=0.0.0.0","--server.port=8501"]
+    ports:
+      - "8501:8501"
     depends_on:
       api:
         condition: service_healthy
-    command: >
-      streamlit run dashboards/m7_drift_perf_app.py --server.port 8501 --server.address 0.0.0.0
-    ports:
-      - "8501:8501"
-    environment:
-      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
     volumes:
-      - ./artifacts:/app/artifacts
-      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./config.yml:/app/config.yml:rw
+
+  watchdog:
+    build: .
+    container_name: noah_watchdog
+    command: ["python","-m","src.utils.health_watchdog"]
+    environment:
+      WATCH_URL: "http://api:9010/health"
+      WATCH_PERIOD_SEC: "30"
+      SLACK_WEBHOOK_URL: "${SLACK_WEBHOOK_URL}"
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
+      SMTP_USER: "${SMTP_USER}"
+      SMTP_PASS: "${SMTP_PASS}"
+      ALERT_EMAIL_TO: "${ALERT_EMAIL_TO}"
+    depends_on:
+      api:
+        condition: service_started
+
+# Optional: set project name
+name: noah_stack

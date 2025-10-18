@@ -8,3 +8,8 @@ streamlit
 pyyaml
 tqdm
 lime
+uvicorn
+fastapi
+requests
+streamlit
+pyyaml

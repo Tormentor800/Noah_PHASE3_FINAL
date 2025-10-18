@@ -1,20 +1,30 @@
-﻿# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1
 FROM python:3.13-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential curl && rm -rf /var/lib/apt/lists/*
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
-COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# System deps (curl for healthcheck, build essentials if needed)
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt ./requirements.txt
+RUN python -m pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy project
+COPY src ./src
+COPY ui ./ui
+COPY config.yml ./config.yml
+
+# Defaults (can be overridden by compose)
+ENV UVICORN_APP="app.main:app" \
+    BIND_HOST="0.0.0.0" \
+    BIND_PORT="9010"
 
 EXPOSE 9010 8501
-ENV MODEL_PATH=artifacts/model.joblib
-ENV PYTHONUNBUFFERED=1
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:9010/health || exit 1
-
-CMD ["python","-m","uvicorn","src.serve.api:app","--host","0.0.0.0","--port","9010"]
+# Default command is API; compose will override for admin + watchdog
+CMD ["python","-m","uvicorn","--app-dir","src","app.main:app","--host","0.0.0.0","--port","9010","--log-level","info"]

@@ -1,4 +1,4 @@
-﻿services:
+services:
   api:
     build: .
     container_name: noah_api

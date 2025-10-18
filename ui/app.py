@@ -1,21 +1,20 @@
-﻿import os
-import io
+import os
 import yaml
+import requests
 import streamlit as st
 from datetime import datetime
-from typing import Dict, Any
 
 CFG_PATH = "config.yml"
 AUDIT_LOG = os.path.join("logs", "audit.log")
+API_BASE = os.environ.get("API_BASE", "http://api:9010")
 
-st.set_page_config(page_title="Noah Admin", page_icon="🛠", layout="centered")
+st.set_page_config(page_title="Noah Admin", page_icon="??", layout="centered")
 
-def load_config(path: str = CFG_PATH) -> Dict[str, Any]:
+def load_config(path: str = CFG_PATH):
     if not os.path.exists(path):
         return {"risk": {}, "books": {}}
     with open(path, "r", encoding="utf-8") as f:
         y = yaml.safe_load(f) or {}
-    # sane defaults
     y.setdefault("risk", {})
     y["risk"].setdefault("kill_switch", False)
     y["risk"].setdefault("max_corr", 0.70)
@@ -26,11 +25,11 @@ def load_config(path: str = CFG_PATH) -> Dict[str, Any]:
     y["books"].setdefault("isn_enabled", True)
     return y
 
-def save_config(cfg: Dict[str, Any], path: str = CFG_PATH) -> None:
-    with open(path, "w", encoding="utf-8") as f:
+def save_config(cfg):
+    with open(CFG_PATH, "w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f, sort_keys=True, allow_unicode=True)
 
-def log_action(msg: str) -> None:
+def log_action(msg: str):
     os.makedirs(os.path.dirname(AUDIT_LOG), exist_ok=True)
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(AUDIT_LOG, "a", encoding="utf-8") as f:
@@ -38,9 +37,9 @@ def log_action(msg: str) -> None:
 
 st.title("Noah Admin UI")
 
-tabs = st.tabs(["⚠️ Risk Controls", "📚 Books", "🧾 Audit Log"])
+tabs = st.tabs(["?? Risk Controls", "?? Books", "?? Composite", "?? Audit Log"])
 
-# ---------------- Risk Controls ----------------
+# ---------- Risk Controls ----------
 with tabs[0]:
     cfg = load_config()
     st.subheader("Risk Controls")
@@ -60,9 +59,9 @@ with tabs[0]:
         log_action(f"risk.update kill_switch={ks} max_corr={max_corr} corr_min_series={min_series}")
         st.success("Risk settings saved.")
 
-# ---------------- Books ----------------
+# ---------- Books ----------
 with tabs[1]:
-    cfg = load_config()  # reload to reflect any tab1 changes immediately
+    cfg = load_config()
     st.subheader("Per-Book Toggles")
 
     p_enabled = st.toggle("Enable Pinnacle", value=bool(cfg["books"]["pinnacle_enabled"]))
@@ -77,10 +76,40 @@ with tabs[1]:
         log_action(f"books.update pinnacle={p_enabled} sbo={s_enabled} isn={i_enabled}")
         st.success("Book settings saved.")
 
-    st.info("Adapters should check these flags before placing orders (e.g., skip API call if disabled).")
+    st.info("Adapters should check these flags before placing orders (skip calls if disabled).")
 
-# ---------------- Audit Log ----------------
+# ---------- Composite ----------
 with tabs[2]:
+    st.subheader("Prematch Odds Composite")
+    league = st.text_input("League", value="NBA")
+    market = st.text_input("Market", value="ML")
+    base_odds = st.number_input("Base odds (seed)", value=1.95, min_value=1.01, step=0.01, format="%.2f")
+
+    col = st.columns(2)
+    with col[0]:
+        hit = st.button("Get Composite")
+    with col[1]:
+        api_base = st.text_input("API Base", value=API_BASE)
+
+    if hit:
+        try:
+            url = f"{api_base}/composite"
+            params = {"league": league, "market": market, "base_odds": base_odds}
+            r = requests.get(url, params=params, timeout=5)
+            r.raise_for_status()
+            data = r.json()
+            st.success("Composite fetched.")
+            st.json(data)
+            # Pretty sources table
+            if "sources" in data:
+                st.write("Sources")
+                st.dataframe(data["sources"])
+            log_action(f"composite.query league={league} market={market} base={base_odds}")
+        except Exception as e:
+            st.error(f"Failed to fetch composite: {e}")
+
+# ---------- Audit Log ----------
+with tabs[3]:
     st.subheader("Audit Log")
     if os.path.exists(AUDIT_LOG):
         with open(AUDIT_LOG, "r", encoding="utf-8") as f:

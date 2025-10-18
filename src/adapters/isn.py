@@ -10,3 +10,9 @@ def fetch_odds(market: Dict[str, Any], request_id: str) -> Dict[str, Any]:
         raw  = clamp_slippage(raw, 1.50, 3.50)
         return {"book":"isn","price":round(raw,3),"ts":market.get("ts")}
     return retry(go)
+class ISNAdapter:
+    """Compatibility shim. Delegates to fetch_odds()."""
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+    def get_odds(self, market, request_id: str = ""):
+        return fetch_odds(market, request_id)

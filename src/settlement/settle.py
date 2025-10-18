@@ -81,3 +81,15 @@ def post_balance_update(total_pnl: float) -> None:
     Wire up `requests` here if/when desired. Kept as a no-op to remain unit-testable offline.
     """
     return
+
+# --- Compatibility constants for older tests ---
+try: ART
+except NameError: ART = os.path.join("artifacts", "settlement")
+try: PER_BET
+except NameError: PER_BET = os.path.join(ART, "per_bet.csv")
+try: CLOSES
+except NameError: CLOSES = os.path.join(ART, "closes.csv")
+try: OUT_CSV
+except NameError: OUT_CSV = os.path.join(ART, "summary_edge_vs_close.csv")
+try: SUMMARY
+except NameError: SUMMARY = OUT_CSV

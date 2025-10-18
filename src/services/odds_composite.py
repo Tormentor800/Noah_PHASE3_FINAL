@@ -1,59 +1,76 @@
-﻿"""
-AsianConnect Prematch Odds Composite
-------------------------------------
-Combines Pinnacle, SBO, and ISN odds into a weighted sharp composite.
-Uses dummy data in demo mode (no live broker creds required).
-"""
+﻿from __future__ import annotations
+import os, json, time
+from typing import Dict, Any, Optional, List
+from dataclasses import dataclass
 
-from __future__ import annotations
-import random, time
-import pandas as pd
+from src.config.loader import load_config
 
-# Default weights (can override via config)
-WEIGHTS = {"pinnacle": 0.50, "sbo": 0.30, "isn": 0.20}
+from src.adapters import pinnacle as ad_p
+from src.adapters import sbo as ad_s
+from src.adapters import isn as ad_i
 
-def _simulate_odds_row(book: str) -> dict:
-    """Simulate one prematch odds row for a given book."""
-    base = random.uniform(1.80, 2.20)
-    return {
-        "book": book,
-        "home_odds": round(base, 3),
-        "away_odds": round(1 / (1 - (1 / base)), 3),
-        "timestamp": time.time(),
-    }
+@dataclass
+class SourceQuote:
+    book: str
+    price: float
+    ts: Optional[float]
 
-def fetch_from_broker(book: str, match_id: str) -> dict:
-    """Stub for AsianConnect API call."""
-    # In production, this will call the AC API endpoint with creds.
-    # Here we simulate with pseudo-random odds.
-    return _simulate_odds_row(book)
+class OddsComposite:
+    def __init__(self, cfg: Optional[Dict[str, Any]] = None) -> None:
+        self.cfg = cfg or load_config()
+        self.weights = self.cfg.get("sharp", {}).get("weights", {"pinnacle":0.5,"sbo":0.3,"isn":0.2})
+        self.cadence = int(self.cfg.get("sharp", {}).get("cadence_sec", 30))
+        self.stale_after = int(self.cfg.get("sharp", {}).get("stale_after_sec", 90))
+        self.norm_scheme = (self.cfg.get("sharp", {}).get("normalization", {}) or {}).get("scheme","proportional")
 
-def compute_composite_odds(match_id: str, weights: dict = None) -> dict:
-    """Fetch odds from Pinnacle/SBO/ISN and compute weighted sharp composite."""
-    w = weights or WEIGHTS
-    books = ["pinnacle", "sbo", "isn"]
-    rows = [fetch_from_broker(b, match_id) for b in books]
-    df = pd.DataFrame(rows)
+    def _normalize(self, price: float) -> float:
+        # For demo: proportional “fair” = price (no margin data), keep hook for real margin removal
+        if self.norm_scheme == "none":
+            return price
+        return price
 
-    # Convert odds → implied probability
-    df["home_prob"] = 1 / df["home_odds"]
-    df["away_prob"] = 1 / df["away_odds"]
+    def _fresh(self, q: SourceQuote, now: float) -> bool:
+        if q.ts is None:
+            return True
+        return (now - q.ts) <= self.stale_after
 
-    # Weighted composite
-    home_comp = sum(df.loc[df["book"] == b, "home_prob"].iloc[0] * w[b] for b in books)
-    away_comp = sum(df.loc[df["book"] == b, "away_prob"].iloc[0] * w[b] for b in books)
+    def fetch_all(self, market: Dict[str, Any]) -> List[SourceQuote]:
+        rid = f"{market.get('league','UNK')}::{market.get('market','UNK')}::{int(time.time())}"
+        quotes: List[SourceQuote] = []
+        for fn in (ad_p.fetch_odds, ad_s.fetch_odds, ad_i.fetch_odds):
+            r = fn(market, rid)
+            quotes.append(SourceQuote(book=r["book"], price=float(r["price"]), ts=r.get("ts")))
+        return quotes
 
-    # Normalize
-    s = home_comp + away_comp
-    home_final, away_final = home_comp / s, away_comp / s
-
-    return {
-        "match_id": match_id,
-        "home_prob": round(home_final, 4),
-        "away_prob": round(away_final, 4),
-        "sharp_books_used": len(books),
-        "timestamp": time.time(),
-    }
-
-if __name__ == "__main__":
-    print(compute_composite_odds("EPL_2025_ARS_TOT"))
+    def compose(self, market: Dict[str, Any]) -> Dict[str, Any]:
+        now = time.time()
+        quotes = self.fetch_all(market)
+        fresh = [q for q in quotes if self._fresh(q, now)]
+        if not fresh:
+            raise RuntimeError("no fresh sources")
+        num = 0.0
+        den = 0.0
+        used = []
+        for q in fresh:
+            w = float(self.weights.get(q.book, 0.0))
+            if w <= 0:
+                continue
+            fair = self._normalize(q.price)
+            num += w * fair
+            den += w
+            used.append({"book": q.book, "price": q.price, "fair": fair, "w": w})
+        if den <= 0:
+            raise RuntimeError("no positive weights for fresh sources")
+        composite_fair = num / den
+        out = {
+            "composite_fair": round(composite_fair, 4),
+            "composite_raw": round(composite_fair, 4),  # placeholder until margin is applied
+            "sources": used,
+            "ts": now,
+        }
+        # snapshot
+        os.makedirs("artifacts/odds_composite", exist_ok=True)
+        snap = f"artifacts/odds_composite/{int(now)}.json"
+        with open(snap, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+        return out

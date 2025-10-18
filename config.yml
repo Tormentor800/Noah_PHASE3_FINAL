@@ -6,3 +6,12 @@ risk:
   corr_min_series: 5
   kill_switch: true
   max_corr: 0.7
+sharp:
+  weights:
+    pinnacle: 0.50
+    sbo: 0.30
+    isn: 0.20
+  cadence_sec: 30
+  stale_after_sec: 90
+  normalization:
+    scheme: "proportional"  # or "none"
